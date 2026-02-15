@@ -10,7 +10,7 @@ import { ApplicationDetail } from "@/components/ApplicationDetail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, LayoutGrid, List, Search } from "lucide-react";
+import { Plus, LayoutGrid, List, Search, Download } from "lucide-react";
 
 const Index = () => {
   const { applications, addApplication, updateApplication, deleteApplication, updateStatus } = useApplications();
@@ -60,14 +60,37 @@ const Index = () => {
     if (!open) setEditingApp(undefined);
   };
 
+  const exportCsv = () => {
+    const headers = ["Company","Role","Status","Date Applied","Salary Min","Salary Max","Location","Contact Person","Job URL","Deadline","Interview Dates","Notes"];
+    const rows = applications.map((a) => [
+      a.company, a.role, a.status, a.dateApplied,
+      a.salaryMin ?? "", a.salaryMax ?? "", a.location ?? "",
+      a.contactPerson ?? "", a.jobUrl ?? "", a.deadline ?? "",
+      (a.interviewDates ?? []).join("; "), a.notes ?? "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `job-applications-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Job Tracker</h1>
-          <Button onClick={() => setFormOpen(true)} size="sm">
-            <Plus className="mr-1.5 h-4 w-4" /> Add Application
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={exportCsv} variant="outline" size="sm">
+              <Download className="mr-1.5 h-4 w-4" /> Export CSV
+            </Button>
+            <Button onClick={() => setFormOpen(true)} size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Add Application
+            </Button>
+          </div>
         </div>
       </header>
 
